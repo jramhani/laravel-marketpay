@@ -2,6 +2,11 @@
 
 A Laravel package for easy integration with the MarketPay API.
 
+## Requirements
+
+- PHP 8.2 or higher
+- Laravel 10.x, 11.x, or 12.x
+
 ## Installation
 
 You can install the package via composer:
@@ -35,6 +40,7 @@ MARKETPAY_ENVIRONMENT=sandbox # or production
 use MarketPay;
 
 // Create a natural user
+// @see https://docs.prod.mpg.market-pay.com/api#create-natural-user
 $user = MarketPay::createUser([
     'FirstName' => 'John',
     'LastName' => 'Doe',
@@ -45,6 +51,7 @@ $user = MarketPay::createUser([
 ]);
 
 // Create a wallet for the user
+// @see https://docs.prod.mpg.market-pay.com/api#create-wallet
 $wallet = MarketPay::createWallet([
     'Owners' => [$user['Id']],
     'Description' => 'Main wallet',
@@ -56,6 +63,7 @@ $wallet = MarketPay::createWallet([
 
 ```php
 // Register a card
+// @see https://docs.prod.mpg.market-pay.com/api#card-registration
 $cardRegistration = MarketPay::createCardRegistration([
     'UserId' => $user['Id'],
     'Currency' => 'EUR'
@@ -66,6 +74,7 @@ $cardRegistration = MarketPay::createCardRegistration([
 
 ```php
 // Create a PayIn (charge a card)
+// @see https://docs.prod.mpg.market-pay.com/api#create-direct-card-payin
 $payIn = MarketPay::createPayIn([
     'AuthorId' => $user['Id'],
     'CreditedWalletId' => $wallet['Id'],
@@ -81,6 +90,7 @@ $payIn = MarketPay::createPayIn([
 ]);
 
 // Create a Transfer
+// @see https://docs.prod.mpg.market-pay.com/api#create-transfer
 $transfer = MarketPay::createTransfer([
     'AuthorId' => $user['Id'],
     'DebitedWalletId' => $wallet['Id'],
@@ -96,6 +106,7 @@ $transfer = MarketPay::createTransfer([
 ]);
 
 // Create a PayOut (withdraw to bank account)
+// @see https://docs.prod.mpg.market-pay.com/api#create-payout
 $payOut = MarketPay::createPayOut([
     'AuthorId' => $user['Id'],
     'DebitedWalletId' => $wallet['Id'],
@@ -113,8 +124,26 @@ $payOut = MarketPay::createPayOut([
 
 ## Testing
 
+The package comes with a test suite. You can run the tests with:
+
 ```bash
 composer test
+```
+
+### Running Individual Tests
+
+You can run specific test cases:
+
+```bash
+./vendor/bin/phpunit --filter=it_can_create_a_natural_user
+```
+
+### Test Coverage
+
+To generate a test coverage report:
+
+```bash
+XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-html coverage
 ```
 
 ## Security

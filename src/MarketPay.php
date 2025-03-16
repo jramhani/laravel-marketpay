@@ -6,6 +6,10 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Arr;
 
+/**
+ * MarketPay API Integration
+ * @see https://docs.prod.mpg.market-pay.com/api
+ */
 class MarketPay
 {
     protected Client $client;
@@ -15,6 +19,14 @@ class MarketPay
     public function __construct(array $config)
     {
         $this->config = $config;
+        $this->initializeClient();
+    }
+
+    /**
+     * Initialize the HTTP client
+     */
+    protected function initializeClient(): void
+    {
         $this->client = new Client([
             'base_uri' => $this->getBaseUrl(),
             'headers' => [
@@ -24,12 +36,32 @@ class MarketPay
         ]);
     }
 
+    /**
+     * Set the HTTP client (for testing purposes)
+     */
+    public function setClient(Client $client): void
+    {
+        $this->client = $client;
+    }
+
+    /**
+     * Get the HTTP client instance
+     */
+    public function getClient(): Client
+    {
+        return $this->client;
+    }
+
     protected function getBaseUrl(): string
     {
         $environment = $this->config['environment'];
         return $this->config['base_url'][$environment];
     }
 
+    /**
+     * Get OAuth access token
+     * @see https://docs.prod.mpg.market-pay.com/api#authentication
+     */
     protected function getAccessToken()
     {
         if ($this->accessToken) {
@@ -71,7 +103,10 @@ class MarketPay
         }
     }
 
-    // Card Registration Methods
+    /**
+     * Register a new card for a user
+     * @see https://docs.prod.mpg.market-pay.com/api#card-registration
+     */
     public function createCardRegistration(array $data)
     {
         return $this->request('POST', '/v2.01/CardRegistrations/card/register', [
@@ -79,7 +114,10 @@ class MarketPay
         ]);
     }
 
-    // User Methods
+    /**
+     * Create a natural user
+     * @see https://docs.prod.mpg.market-pay.com/api#create-natural-user
+     */
     public function createUser(array $data)
     {
         return $this->request('POST', '/v2.01/User/natural', [
@@ -87,7 +125,10 @@ class MarketPay
         ]);
     }
 
-    // Wallet Methods
+    /**
+     * Create a new wallet
+     * @see https://docs.prod.mpg.market-pay.com/api#create-wallet
+     */
     public function createWallet(array $data)
     {
         return $this->request('POST', '/v2.01/Wallets', [
@@ -95,7 +136,10 @@ class MarketPay
         ]);
     }
 
-    // Payment Methods
+    /**
+     * Create a direct card PayIn
+     * @see https://docs.prod.mpg.market-pay.com/api#create-direct-card-payin
+     */
     public function createPayIn(array $data)
     {
         return $this->request('POST', '/v2.01/PayIns/card/direct', [
@@ -103,6 +147,10 @@ class MarketPay
         ]);
     }
 
+    /**
+     * Create a PayOut (withdrawal to bank account)
+     * @see https://docs.prod.mpg.market-pay.com/api#create-payout
+     */
     public function createPayOut(array $data)
     {
         return $this->request('POST', '/v2.01/PayOuts', [
@@ -110,6 +158,10 @@ class MarketPay
         ]);
     }
 
+    /**
+     * Create a transfer between wallets
+     * @see https://docs.prod.mpg.market-pay.com/api#create-transfer
+     */
     public function createTransfer(array $data)
     {
         return $this->request('POST', '/v2.01/Transfers', [
