@@ -10,3 +10,4 @@ coverage
 .php-cs-fixer.cache
 *.swp
 *.swo 
+.env
