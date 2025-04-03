@@ -2,6 +2,9 @@
 
 A Laravel package for easy integration with the MarketPay API.
 
+## Status
+- On development (no validation or testing yet)
+
 ## Requirements
 
 - PHP 8.2 or higher
