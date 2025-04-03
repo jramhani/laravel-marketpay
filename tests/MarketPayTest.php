@@ -6,19 +6,68 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use Jramhani\LaravelMarketPay\Exceptions\MarketPayException;
 use Jramhani\LaravelMarketPay\MarketPay;
+use Jramhani\LaravelMarketPay\DTOs\Money;
+use PHPUnit\Framework\TestCase;
+use Jramhani\LaravelMarketPay\Models\Money as OldMoney;
 
 class MarketPayTest extends TestCase
 {
+    protected MarketPay $marketPay;
+    protected MockHandler $mockHandler;
+    protected array $config;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->config = [
+            'client_id' => 'test_client_id',
+            'client_secret' => 'test_client_secret',
+            'environment' => 'sandbox',
+            'base_url' => [
+                'sandbox' => 'https://api.sandbox.marketpay.io',
+                'production' => 'https://api.marketpay.io',
+            ],
+        ];
+
+        $this->mockHandler = new MockHandler();
+        $handlerStack = HandlerStack::create($this->mockHandler);
+        $client = new Client(['handler' => $handlerStack]);
+
+        $this->marketPay = new MarketPay($this->config);
+        $this->marketPay->setClient($client);
+    }
+
+    /** @test */
+    public function it_returns_true_when_ping_returns_200()
+    {
+        $this->mockHandler->append(
+            new Response(200)
+        );
+
+        $result = $this->marketPay->ping();
+
+        $this->assertTrue($result);
+    }
+
+    /** @test */
+    public function it_throws_exception_when_ping_fails()
+    {
+        $this->mockHandler->append(
+            new Response(500)
+        );
+
+        $this->expectException(MarketPayException::class);
+        $this->expectExceptionMessage('API is not accessible');
+
+        $this->marketPay->ping();
     }
 
     /** @test */
     public function it_can_create_a_natural_user()
     {
-        // Mock response
         $mock = new MockHandler([
             new Response(200, [], json_encode([
                 'access_token' => 'test-token',
@@ -36,7 +85,7 @@ class MarketPayTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $client = new Client(['handler' => $handlerStack]);
 
-        $marketPay = new MarketPay(config('marketpay'));
+        $marketPay = new MarketPay($this->config);
         $marketPay->setClient($client);
 
         $response = $marketPay->createUser([
@@ -57,7 +106,6 @@ class MarketPayTest extends TestCase
     /** @test */
     public function it_can_create_a_wallet()
     {
-        // Mock response
         $mock = new MockHandler([
             new Response(200, [], json_encode([
                 'access_token' => 'test-token',
@@ -78,7 +126,7 @@ class MarketPayTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $client = new Client(['handler' => $handlerStack]);
 
-        $marketPay = new MarketPay(config('marketpay'));
+        $marketPay = new MarketPay($this->config);
         $marketPay->setClient($client);
 
         $response = $marketPay->createWallet([
@@ -95,7 +143,6 @@ class MarketPayTest extends TestCase
     /** @test */
     public function it_can_create_a_card_registration()
     {
-        // Mock response
         $mock = new MockHandler([
             new Response(200, [], json_encode([
                 'access_token' => 'test-token',
@@ -114,7 +161,7 @@ class MarketPayTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $client = new Client(['handler' => $handlerStack]);
 
-        $marketPay = new MarketPay(config('marketpay'));
+        $marketPay = new MarketPay($this->config);
         $marketPay->setClient($client);
 
         $response = $marketPay->createCardRegistration([
@@ -131,7 +178,6 @@ class MarketPayTest extends TestCase
     /** @test */
     public function it_can_create_a_pay_in()
     {
-        // Mock response
         $mock = new MockHandler([
             new Response(200, [], json_encode([
                 'access_token' => 'test-token',
@@ -153,20 +199,24 @@ class MarketPayTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $client = new Client(['handler' => $handlerStack]);
 
-        $marketPay = new MarketPay(config('marketpay'));
+        $marketPay = new MarketPay($this->config);
         $marketPay->setClient($client);
+
+        $debitedFunds = new Money([
+            'Currency' => 'EUR',
+            'Amount' => 1000,
+        ]);
+
+        $fees = new Money([
+            'Currency' => 'EUR',
+            'Amount' => 0,
+        ]);
 
         $response = $marketPay->createPayIn([
             'AuthorId' => 'user_123',
             'CreditedWalletId' => 'wallet_123',
-            'DebitedFunds' => [
-                'Currency' => 'EUR',
-                'Amount' => 1000,
-            ],
-            'Fees' => [
-                'Currency' => 'EUR',
-                'Amount' => 0,
-            ],
+            'DebitedFunds' => $debitedFunds,
+            'Fees' => $fees,
             'CardId' => 'card_123',
         ]);
 
